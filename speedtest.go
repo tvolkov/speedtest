@@ -10,11 +10,11 @@ import (
 
 type SpeedTestResult struct {
 	provider string
-	download int
-	upload   int
+	download float64
+	upload   float64
 }
 
-type TestSpeedFunc func() (int, int, error)
+type TestSpeedFunc func() (float64, float64, error)
 
 const PROVIDER_SPEEDTEST string = "speedtest"
 const PROVIDER_FASTCOM string = "fastcom"
@@ -29,5 +29,5 @@ func Speedtest(providerName string) (SpeedTestResult, error) {
 
 	a, b, e := providerMap[providerName]()
 	fmt.Println(e)
-	return SpeedTestResult{provider: "test", download: a, upload: b}, nil
+	return SpeedTestResult{provider: providerName, download: a, upload: b}, nil
 }
