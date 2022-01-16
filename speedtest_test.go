@@ -10,7 +10,7 @@ import (
 
 func Test(t *testing.T) {
 
-	s, e := speedtest.Speedtest("speedtest")
+	s, e := speedtest.Speedtest("fastcom")
 
 	fmt.Println(s)
 	fmt.Println(e)
