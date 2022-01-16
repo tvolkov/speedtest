@@ -2,9 +2,11 @@ package fastcom
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -15,7 +17,7 @@ import (
 
 var log = logging.MustGetLogger("fast.com")
 
-const uploadMBSize = 100
+const uploadMBSize = 10
 const parallelismLevel = 10
 
 func TestSpeed() (float64, float64, error) {
@@ -46,70 +48,82 @@ func TestSpeed() (float64, float64, error) {
 	return downloadSpeed, uploadSpeed, nil
 }
 
-func testSpeed(url string, action func(url string) error) (float64, error) {
+func testSpeed(url string, action func(url string) (int, error)) (float64, error) {
 
 	startTime := time.Now()
 
+	var totalDataAmountBytes = 0
+
 	var waitGroup sync.WaitGroup
 	waitGroup.Add(parallelismLevel)
-	defer waitGroup.Wait()
 
 	for i := 0; i < parallelismLevel; i++ {
 		currentFunc := func() {
-			action(url)
+			data, e := action(url)
+			totalDataAmountBytes += data
+			if e != nil {
+				log.Warning(e)
+			}
 		}
-		go func(copy func()) {
-			defer waitGroup.Done()
-			copy()
+		go func(executable func()) {
+			executable()
+			waitGroup.Done()
 		}(currentFunc)
 	}
 
+	waitGroup.Wait()
+
 	duration := time.Since(startTime)
-	return uploadMBSize * 8 * float64(parallelismLevel) / duration.Seconds(), nil
+	speed := float64(totalDataAmountBytes/1024/1024/10) * 8 * parallelismLevel / duration.Seconds()
+	speedStr := fmt.Sprintf("%f", speed)
+	r, _ := strconv.ParseFloat(string(speedStr), 64)
+
+	return r, nil
 }
 
-func downloadFile(url string) error {
+func downloadFile(url string) (int, error) {
 	response, err := http.Get(url)
 
 	if err != nil {
 		log.Warning("error while executing GET for url: %s", url)
-		return err
+		return 0, err
 	}
 
 	defer response.Body.Close()
 
 	if response.StatusCode != 200 {
 		log.Warning("Received non 200 response code while downloading file")
-		return errors.New("received non 200 response code")
+		return 0, errors.New("received non 200 response code")
 	}
 
 	byteArray, err := io.ReadAll(response.Body)
-	log.Debug("download response byte array of length %d", len(byteArray))
+	log.Debug("download response byte array of length ", len(byteArray))
 
 	if err != nil {
 		log.Warning("Error while downloading file, %s", err)
-		return err
+		return 0, err
 	}
 
-	return nil
+	return len(byteArray), nil
 }
 
-func uploadFile(myurl string) error {
-	response, err := http.PostForm(myurl, url.Values{"key": {strings.Repeat("string(rand.Int31())", uploadMBSize*1024*1024)}})
+func uploadFile(myurl string) (int, error) {
+	var payload = strings.Repeat("1", uploadMBSize*1024*1024)
+	response, err := http.PostForm(myurl, url.Values{"key": {payload}})
 
 	if err != nil {
 		log.Warning("Error while uploading file: %s", err)
-		return err
+		return 0, err
 	}
 
 	defer response.Body.Close()
 
 	byteArray, err := io.ReadAll(response.Body)
-	log.Debug("response byte array of length %d", len(byteArray))
+	log.Debug("response byte array of length ", len(byteArray))
 
 	if err != nil {
 		log.Warning("error while uploading file, %s", err)
-		return err
+		return 0, err
 	}
-	return nil
+	return len(payload), nil
 }
