@@ -11,5 +11,6 @@ require (
 	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/showwin/speedtest-go v1.1.4 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
-	golang.org/x/sys v0.0.0-20191026070338-33540a1f6037 // indirect
+	golang.org/x/sys v0.0.0-20211019181941-9d821ace8654 // indirect
+	golang.org/x/tools v0.1.8 // indirect
 )

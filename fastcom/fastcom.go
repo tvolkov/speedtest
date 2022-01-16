@@ -20,6 +20,11 @@ var log = logging.MustGetLogger("fast.com")
 const uploadMBSize = 10
 const parallelismLevel = 10
 
+/*this module tests speed by downloading and uploading some data from/to fast.com server in parallel
+* it then divides the size of data by the amount of time taken
+
+ */
+
 func TestSpeed() (float64, float64, error) {
 	log.Info("Testing speed using fast.com")
 	url := fast.GetDlUrls(1)
@@ -73,12 +78,14 @@ func testSpeed(url string, action func(url string) (int, error)) (float64, error
 
 	waitGroup.Wait()
 
-	duration := time.Since(startTime)
-	speed := float64(totalDataAmountBytes/1024/1024/10) * 8 * parallelismLevel / duration.Seconds()
+	return calculateResult(totalDataAmountBytes, time.Since(startTime)), nil
+}
+
+func calculateResult(totalBytes int, duration time.Duration) float64 {
+	speed := float64(totalBytes/1024/1024/10) * 8 * parallelismLevel / duration.Seconds()
 	speedStr := fmt.Sprintf("%f", speed)
 	r, _ := strconv.ParseFloat(string(speedStr), 64)
-
-	return r, nil
+	return r
 }
 
 func downloadFile(url string) (int, error) {
