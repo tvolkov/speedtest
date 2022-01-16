@@ -10,13 +10,17 @@ import (
 
 var log = logging.MustGetLogger("speedtest.net")
 
+/*
+   this module tests connection speed by just invoking github.com/showwin/speedtest-go/speedtest module
+   in this implementation I deliberately ignore many possible network errors, which ideally should be handled
+*/
 func TestSpeed() (float64, float64, error) {
 	log.Info("Testing speed using speedtest.net")
 	user, err := speedtest.FetchUserInfo()
 
 	if err != nil {
 		log.Warningf("Error fetching user info: %s", err)
-		return 0, 0, errors.New("Error fetching user info")
+		return 0, 0, errors.New("error fetching user info")
 	}
 
 	serverList, err := speedtest.FetchServerList(user)

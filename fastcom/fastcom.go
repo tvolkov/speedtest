@@ -20,10 +20,11 @@ var log = logging.MustGetLogger("fast.com")
 const uploadMBSize = 10
 const parallelismLevel = 10
 
-/*this module tests speed by downloading and uploading some data from/to fast.com server in parallel
-* it then divides the size of data by the amount of time taken
-
- */
+/*
+   this module tests speed by downloading and uploading some data from/to fast.com server in parallel
+   it then divides the size of data by the amount of time taken
+   in this implementation I deliberately ignore many possible network errors, which ideally should be handled
+*/
 
 func TestSpeed() (float64, float64, error) {
 	log.Info("Testing speed using fast.com")
